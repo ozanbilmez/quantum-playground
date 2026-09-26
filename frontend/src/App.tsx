@@ -1,121 +1,57 @@
 import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
+import type { Circuit } from './types'
 import './App.css'
 
+const exampleCircuit: Circuit = {
+  numQubits: 3,
+  gates: [
+    { id: 'g1', type: 'H', qubits: [0], step: 0 },
+    { id: 'g2', type: 'CX', qubits: [0, 1], step: 1 },
+    { id: 'g3', type: 'RZ', qubits: [2], step: 1, params: { theta: 1.5708 } },
+  ],
+}
+
 function App() {
-  const [count, setCount] = useState(0)
+  const [circuit] = useState<Circuit>(exampleCircuit)
+  const numSteps = Math.max(...circuit.gates.map((g) => g.step)) + 1
+
+  // Her (step, qubit) çiftinde hangi kapının olduğunu bul
+  const gateAt = (step: number, qubit: number) =>
+    circuit.gates.find((g) => g.step === step && g.qubits.includes(qubit))
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div className="circuit-container">
+      <h1>Quantum Playground</h1>
+      <div
+        className="circuit-grid"
+        style={{ gridTemplateColumns: `80px repeat(${numSteps}, 60px)` }}
+      >
+        {/* Başlık satırı: step numaraları */}
+        <div className="grid-cell header" />
+        {Array.from({ length: numSteps }, (_, s) => (
+          <div key={`h-${s}`} className="grid-cell header">
+            t{s}
+          </div>
+        ))}
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+        {/* Her kübit için bir satır */}
+        {Array.from({ length: circuit.numQubits }, (_, q) => (
+          <>
+            <div key={`q-${q}`} className="grid-cell qubit-label">
+              q{q}
+            </div>
+            {Array.from({ length: numSteps }, (_, s) => {
+              const gate = gateAt(s, q)
+              return (
+                <div key={`c-${q}-${s}`} className="grid-cell">
+                  {gate && <div className="gate">{gate.type}</div>}
+                </div>
+              )
+            })}
+          </>
+        ))}
+      </div>
+    </div>
   )
 }
 
