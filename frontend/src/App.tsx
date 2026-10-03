@@ -1,56 +1,63 @@
 import { useState } from 'react'
 import type { Circuit } from './types'
+import { GatePalette } from './GatePalette'
 import './App.css'
 
-const exampleCircuit: Circuit = {
-  numQubits: 3,
-  gates: [
-    { id: 'g1', type: 'H', qubits: [0], step: 0 },
-    { id: 'g2', type: 'CX', qubits: [0, 1], step: 1 },
-    { id: 'g3', type: 'RZ', qubits: [2], step: 1, params: { theta: 1.5708 } },
-  ],
-}
+const initialCircuit: Circuit = { numQubits: 3, gates: [] }
 
 function App() {
-  const [circuit] = useState<Circuit>(exampleCircuit)
-  const numSteps = Math.max(...circuit.gates.map((g) => g.step)) + 1
+  const [circuit, setCircuit] = useState<Circuit>(initialCircuit)
+  const numSteps = Math.max(3, ...circuit.gates.map((g) => g.step + 1))
 
-  // Her (step, qubit) çiftinde hangi kapının olduğunu bul
   const gateAt = (step: number, qubit: number) =>
     circuit.gates.find((g) => g.step === step && g.qubits.includes(qubit))
+
+  const handleDrop = (e: React.DragEvent, step: number, qubit: number) => {
+    const type = e.dataTransfer.getData('text/gate-type')
+    if (!type) return
+    setCircuit((c) => ({
+      ...c,
+      gates: [
+        ...c.gates.filter((g) => !(g.step === step && g.qubits.includes(qubit))),
+        { id: `g${Date.now()}`, type, qubits: [qubit], step },
+      ],
+    }))
+  }
+
+  const handleCellClick = (step: number, qubit: number) => {
+    setCircuit((c) => ({
+      ...c,
+      gates: c.gates.filter((g) => !(g.step === step && g.qubits.includes(qubit))),
+    }))
+  }
 
   return (
     <div className="circuit-container">
       <h1>Quantum Playground</h1>
-      <div
-        className="circuit-grid"
-        style={{ gridTemplateColumns: `80px repeat(${numSteps}, 60px)` }}
-      >
-        {/* Başlık satırı: step numaraları */}
+      <GatePalette />
+      <div className="circuit-grid" style={{ gridTemplateColumns: `80px repeat(${numSteps}, 60px)` }}>
         <div className="grid-cell header" />
         {Array.from({ length: numSteps }, (_, s) => (
-          <div key={`h-${s}`} className="grid-cell header">
-            t{s}
-          </div>
+          <div key={`h-${s}`} className="grid-cell header">t{s}</div>
         ))}
-
-        {/* Her kübit için bir satır */}
         {Array.from({ length: circuit.numQubits }, (_, q) => (
           <>
-            <div key={`q-${q}`} className="grid-cell qubit-label">
-              q{q}
-            </div>
-            {Array.from({ length: numSteps }, (_, s) => {
-              const gate = gateAt(s, q)
-              return (
-                <div key={`c-${q}-${s}`} className="grid-cell">
-                  {gate && <div className="gate">{gate.type}</div>}
-                </div>
-              )
-            })}
+            <div key={`q-${q}`} className="grid-cell qubit-label">q{q}</div>
+            {Array.from({ length: numSteps }, (_, s) => (
+              <div
+                key={`c-${q}-${s}`}
+                className="grid-cell"
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => handleDrop(e, s, q)}
+                onClick={() => handleCellClick(s, q)}
+              >
+                {gateAt(s, q) && <div className="gate">{gateAt(s, q)!.type}</div>}
+              </div>
+            ))}
           </>
         ))}
       </div>
+      <pre className="circuit-json">{JSON.stringify(circuit, null, 2)}</pre>
     </div>
   )
 }
