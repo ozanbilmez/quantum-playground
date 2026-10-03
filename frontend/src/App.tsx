@@ -31,6 +31,31 @@ function App() {
     }))
   }
 
+  const handleExport = () => {
+  const blob = new Blob([JSON.stringify(circuit, null, 2)], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'circuit.json'
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
+const handleImport = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0]
+  if (!file) return
+  const reader = new FileReader()
+  reader.onload = () => {
+    try {
+      const parsed = JSON.parse(reader.result as string) as Circuit
+      setCircuit(parsed)
+    } catch {
+      alert('Geçersiz JSON dosyası')
+    }
+  }
+  reader.readAsText(file)
+}
+
   return (
     <div className="circuit-container">
       <h1>Quantum Playground</h1>
@@ -56,6 +81,10 @@ function App() {
             ))}
           </>
         ))}
+      </div>
+      <div className="toolbar">
+        <button onClick={handleExport}>Dışa Aktar (JSON)</button>
+        <input type="file" accept=".json" onChange={handleImport} />
       </div>
       <pre className="circuit-json">{JSON.stringify(circuit, null, 2)}</pre>
     </div>
