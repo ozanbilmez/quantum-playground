@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+
 from .models import Circuit
 
 app = FastAPI(title="Quantum Playground API")
